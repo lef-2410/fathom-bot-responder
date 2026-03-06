@@ -66,7 +66,7 @@ cd cloud-bot
 
 # Edit fly.toml — change the app name
 # Then create the app and set secrets:
-fly launch --no-deploy
+fly launch --no-deploy --ha=false
 fly secrets set \
   ANTHROPIC_API_KEY=your-key \
   FATHOM_API_KEY=your-key \
@@ -77,10 +77,8 @@ fly secrets set \
   USER_NAME="Your Name" \
   COMPANY_NAME="Your Company"
 
-# Copy style guide into build context and deploy
-cp /path/to/email-style.md ./email-style.md
-fly deploy
-rm email-style.md
+# Deploy (--ha=false ensures only 1 machine — this is a worker, not a web app)
+fly deploy --ha=false
 ```
 
 ### 5. Run Locally (optional)

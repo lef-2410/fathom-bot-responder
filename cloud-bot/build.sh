@@ -8,6 +8,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "Deploying to Fly.io..."
-fly deploy
+fly deploy --ha=false
 
 echo "Done."

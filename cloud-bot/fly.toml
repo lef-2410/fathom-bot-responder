@@ -13,6 +13,11 @@ primary_region = "sjc"
 
 # No [[services]] block — this is a worker, not a web server.
 # Fly.io keeps the process running and restarts on crash.
+#
+# IMPORTANT: Always deploy with --ha=false to avoid creating 2 machines.
+# This is a single-tenant worker — only 1 machine is needed.
+#   fly launch --ha=false
+#   fly deploy --ha=false
 
 [[vm]]
   size = "shared-cpu-1x"
