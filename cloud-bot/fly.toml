@@ -1,0 +1,19 @@
+# Fly.io configuration for the Call Workflow Cloud Bot
+# This is a worker process (no HTTP server).
+
+app = "laura-call-bot"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  POLL_INTERVAL_SECONDS = "900"
+  LOG_LEVEL = "INFO"
+
+# No [[services]] block — this is a worker, not a web server.
+# Fly.io keeps the process running and restarts on crash.
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

@@ -1,0 +1,22 @@
+# Secrets
+.env
+cloud-bot/.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Build artifacts
+cloud-bot/email-style.md
