@@ -65,17 +65,11 @@ Create an `email-style.md` file in the `cloud-bot/` directory with examples of y
 cd cloud-bot
 
 # Edit fly.toml — change the app name
-# Then create the app and set secrets:
+# Then create the app:
 fly launch --no-deploy --ha=false
-fly secrets set \
-  ANTHROPIC_API_KEY=your-key \
-  FATHOM_API_KEY=your-key \
-  NOTION_API_KEY=your-key \
-  NOTION_DATABASE_ID=your-db-id \
-  GMAIL_ADDRESS=your-email \
-  GMAIL_APP_PASSWORD=your-app-password \
-  USER_NAME="Your Name" \
-  COMPANY_NAME="Your Company"
+
+# Import secrets from your .env file
+fly secrets import < .env
 
 # Deploy (--ha=false ensures only 1 machine — this is a worker, not a web app)
 fly deploy --ha=false
