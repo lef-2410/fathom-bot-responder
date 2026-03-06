@@ -33,7 +33,7 @@ def save_draft(to_addresses: list[str] | str, subject: str, body: str) -> bool:
 
         email_bytes = msg.as_bytes()
 
-        client = IMAPClient("imap.gmail.com", port=993, ssl=True)
+        client = IMAPClient(Config.IMAP_SERVER, port=Config.IMAP_PORT, ssl=True)
         client.login(Config.GMAIL_ADDRESS, Config.GMAIL_APP_PASSWORD)
         client.append("[Gmail]/Drafts", email_bytes)
         client.logout()

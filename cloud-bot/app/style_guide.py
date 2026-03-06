@@ -3,11 +3,18 @@
 import os
 import logging
 
+from app.config import Config
+
 logger = logging.getLogger(__name__)
 
 _STYLE_GUIDE_PATH = os.path.join(os.path.dirname(__file__), "..", "email-style.md")
 
-_FALLBACK = """# Email Style Guide
+
+def _fallback_guide() -> str:
+    """Generate a fallback style guide using config values."""
+    name = Config.USER_NAME or "the user"
+    company = Config.COMPANY_NAME or "the company"
+    return f"""# Email Style Guide
 
 ## Writing Style
 - Write as "I" — never "we" or corporate voice
@@ -22,7 +29,7 @@ _FALLBACK = """# Email Style Guide
 - "Please don't hesitate to reach out"
 - "As per our conversation"
 - "Going forward"
-- "Best regards" — just sign as Laura
+- "Best regards" — just sign as {name}
 - Passive voice
 - Long walls of text
 - Generic filler sentences that don't add information
@@ -30,10 +37,10 @@ _FALLBACK = """# Email Style Guide
 ## Sign-off Format
 [brief closing line]
 
-Laura
+{name}
 
 ## Drafting Instruction
-Write as Laura, a customer success manager at 1mind. The email should feel
+Write as {name}, a customer success manager at {company}. The email should feel
 like it came from a real person who was genuinely on the call — specific,
 warm, and to the point. Reference actual things discussed. Never sound like
 a template.
@@ -54,4 +61,4 @@ def load_style_guide() -> str:
         pass
 
     logger.warning("Style guide file not found, using fallback defaults")
-    return _FALLBACK
+    return _fallback_guide()

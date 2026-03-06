@@ -61,14 +61,14 @@ Extract the following as a JSON object:
   "pain_points": "customer frustrations, blockers, or problems mentioned. Use 'None mentioned' if none.",
   "feature_requests": "specific product features requested. Use 'None mentioned' if none.",
   "sentiment": "exactly one of: Very Positive, Positive, Neutral, Mixed, Negative",
-  "action_items_text": "plain text list of Laura's commitments, one per line with '- ' prefix",
+  "action_items_text": "plain text list of {Config.USER_NAME}'s commitments, one per line with '- ' prefix",
   "action_items_list": ["item 1", "item 2"],
   "next_steps": "the agreed follow-up plan"
 }}
 
 Important:
-- company_name should be the customer's company, not 1mind
-- contact_name should be the external person, not Laura
+- company_name should be the customer's company, not {Config.COMPANY_NAME}
+- contact_name should be the external person, not {Config.USER_NAME}
 - sentiment must be exactly one of the five options listed
 - action_items_list should contain each action item as a separate string"""
 
@@ -120,7 +120,7 @@ def draft_email(analyzed: AnalyzedCall, style_guide: str) -> tuple[str, str]:
     # Extract first name for subject line
     first_name = analyzed.contact_name.split()[0] if analyzed.contact_name else "there"
 
-    prompt = f"""You are Laura, a customer success manager at 1mind.
+    prompt = f"""You are {Config.USER_NAME}, a customer success manager at {Config.COMPANY_NAME}.
 Draft a follow-up email after this customer call.
 
 EMAIL STYLE GUIDE (follow this exactly):
@@ -138,9 +138,9 @@ Pain Points: {analyzed.pain_points}
 EMAIL STRUCTURE:
 - Opening: 1 sentence referencing something specific from the call
 - Middle: 1-2 sentences on key takeaways or what you discussed
-- Action items: short bullet list of Laura's commitments (use "- " bullets)
+- Action items: short bullet list of {Config.USER_NAME}'s commitments (use "- " bullets)
 - Close: 1 line on next steps
-- Sign-off: just "Laura" on its own line
+- Sign-off: just "{Config.USER_NAME}" on its own line
 
 Write ONLY the email body text. No subject line, no "Subject:" prefix, no markdown formatting.
 Do not include any preamble like "Here's the draft:" — just the email text itself."""

@@ -1,7 +1,7 @@
 # Fly.io configuration for the Call Workflow Cloud Bot
 # This is a worker process (no HTTP server).
 
-app = "laura-call-bot"
+app = "laura-call-bot"  # Change this to your Fly.io app name
 primary_region = "sjc"
 
 [build]

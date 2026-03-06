@@ -17,6 +17,10 @@ class Config:
     NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
     GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS", "")
     GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
+    IMAP_SERVER = os.getenv("IMAP_SERVER", "imap.gmail.com")
+    IMAP_PORT = int(os.getenv("IMAP_PORT", "993"))
+    USER_NAME = os.getenv("USER_NAME", "")
+    COMPANY_NAME = os.getenv("COMPANY_NAME", "")
     POLL_INTERVAL_SECONDS = int(os.getenv("POLL_INTERVAL_SECONDS", "900"))
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
@@ -36,6 +40,10 @@ class Config:
             errors.append("GMAIL_ADDRESS is not set")
         if not cls.GMAIL_APP_PASSWORD:
             errors.append("GMAIL_APP_PASSWORD is not set")
+        if not cls.USER_NAME:
+            errors.append("USER_NAME is not set")
+        if not cls.COMPANY_NAME:
+            errors.append("COMPANY_NAME is not set")
         if cls.POLL_INTERVAL_SECONDS < 60:
             errors.append("POLL_INTERVAL_SECONDS must be >= 60")
         if errors:
