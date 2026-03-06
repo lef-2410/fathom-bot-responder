@@ -18,5 +18,5 @@ __pycache__/
 # Claude
 .claude/
 
-# Build artifacts
+# Personal style guide (each user creates their own from .example)
 cloud-bot/email-style.md

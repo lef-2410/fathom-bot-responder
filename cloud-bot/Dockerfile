@@ -6,7 +6,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the email style guide from parent project
+# Copy email style guide (create yours from email-style.md.example)
 COPY email-style.md /app/email-style.md
 
 # Copy application code
