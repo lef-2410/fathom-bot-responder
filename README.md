@@ -1,156 +1,142 @@
-# Support Assistant
+# Fathom Bot Responder
 
-An automated support email assistant that detects support requests, searches Notion for relevant help articles, and drafts responses for human review.
-
-## Features
-
-- Polls Gmail inbox every 5 minutes for new emails
-- Uses Claude CLI to classify emails as support requests
-- Searches Notion for relevant help articles using MCP tools
-- Drafts helpful responses with links to relevant documentation
-- Saves drafts to Gmail for human review before sending
-- Tracks processed emails to avoid duplicates
-
-## Prerequisites
-
-- Python 3.10+
-- [Claude CLI](https://claude.ai/code) installed and authenticated
-- Gmail account with IMAP enabled
-- Notion workspace (for help article search)
-
-## Setup
-
-### 1. Clone and Setup
-
-```bash
-# Navigate to the project directory
-cd support-assistant
-
-# Run the setup script
-./setup.sh
-```
-
-### 2. Configure Gmail
-
-#### Enable IMAP in Gmail:
-1. Go to Gmail Settings (gear icon)
-2. Click "See all settings"
-3. Go to "Forwarding and POP/IMAP" tab
-4. Enable IMAP access
-5. Save changes
-
-#### Create an App Password:
-1. Go to https://myaccount.google.com/security
-2. Enable 2-Factor Authentication (if not already enabled)
-3. Go to https://myaccount.google.com/apppasswords
-4. Select "Mail" and your device
-5. Click "Generate"
-6. Copy the 16-character password (without spaces)
-
-### 3. Configure Environment
-
-Edit the `.env` file with your credentials:
-
-```bash
-# Gmail Configuration
-GMAIL_ADDRESS=your-email@gmail.com
-GMAIL_APP_PASSWORD=your-16-char-app-password
-
-# Polling interval (default 5 minutes)
-POLL_INTERVAL_SECONDS=300
-
-# Optional: Notion database ID for help articles
-# NOTION_HELP_DATABASE_ID=your-database-id
-```
-
-### 4. Ensure Claude CLI is Authenticated
-
-Make sure Claude CLI is installed and you're logged in:
-
-```bash
-# Check Claude CLI is available
-claude --version
-
-# Login if needed
-claude login
-```
-
-## Running the Assistant
-
-```bash
-./run.sh
-```
-
-Or manually:
-
-```bash
-source venv/bin/activate
-python main.py
-```
-
-Press `Ctrl+C` to stop the assistant gracefully.
+Automatically monitors [Fathom](https://fathom.video) for new call recordings, analyzes them with Claude, logs structured data in Notion, and drafts personalized follow-up emails in Gmail.
 
 ## How It Works
 
-1. **Email Fetching**: Polls Gmail inbox for unread emails
-2. **Classification**: Uses Claude CLI to determine if an email is a support request
-3. **Knowledge Search**: Searches Notion for relevant help articles using MCP tools
-4. **Response Drafting**: Uses Claude to compose a helpful response with article links
-5. **Draft Saving**: Saves the draft to Gmail's Drafts folder for review
+1. **Polls Fathom** every 15 minutes for new call recordings
+2. **Skips internal calls** (any title containing `[INT]`)
+3. **Analyzes each call** with Claude to extract company name, contacts, sentiment, action items, pain points, and feature requests
+4. **Logs the call** in a Notion Call Tracker database with all structured properties and action item checkboxes
+5. **Drafts a follow-up email** via IMAP — addressed to all external invitees, written in your voice using a style guide
+6. **Deduplicates** using an in-memory cache seeded from Notion at startup
+
+Emails are saved as **drafts only** — never sent automatically.
+
+## Prerequisites
+
+- Python 3.12+
+- [Fathom](https://fathom.video) account with API access
+- [Anthropic API](https://console.anthropic.com/) key
+- [Notion](https://www.notion.so/my-integrations) integration with a Call Tracker database
+- Gmail account with [App Password](https://myaccount.google.com/apppasswords) (requires 2FA)
+- [Fly.io](https://fly.io) account (for cloud deployment)
+
+## Setup
+
+### 1. Configure Environment
+
+```bash
+cd cloud-bot
+cp .env.example .env
+```
+
+Edit `.env` with your credentials. See `.env.example` for all available options.
+
+### 2. Set Up Notion
+
+Create a Notion database with these properties:
+
+| Property | Type |
+|----------|------|
+| Name | Title |
+| Call Date | Date |
+| Call Week | Text |
+| Contact Name | Text |
+| Contact Email | Email |
+| Summary | Text |
+| Pain Points | Text |
+| Feature Requests | Text |
+| Action Items | Text |
+| Next Steps | Text |
+| Sentiment | Select (Very Positive, Positive, Neutral, Mixed, Negative) |
+| Follow-up Sent | Checkbox |
+| Recording ID | Text |
+
+Share the database with your Notion integration.
+
+### 3. Email Style Guide
+
+Create an `email-style.md` file in the `cloud-bot/` directory with examples of your writing style. The bot uses this to draft emails that sound like you. A fallback generic style guide is used if the file is missing.
+
+### 4. Deploy to Fly.io
+
+```bash
+cd cloud-bot
+
+# Edit fly.toml — change the app name
+# Then create the app and set secrets:
+fly launch --no-deploy
+fly secrets set \
+  ANTHROPIC_API_KEY=your-key \
+  FATHOM_API_KEY=your-key \
+  NOTION_API_KEY=your-key \
+  NOTION_DATABASE_ID=your-db-id \
+  GMAIL_ADDRESS=your-email \
+  GMAIL_APP_PASSWORD=your-app-password \
+  USER_NAME="Your Name" \
+  COMPANY_NAME="Your Company"
+
+# Copy style guide into build context and deploy
+cp /path/to/email-style.md ./email-style.md
+fly deploy
+rm email-style.md
+```
+
+### 5. Run Locally (optional)
+
+```bash
+cd cloud-bot
+pip install -r requirements.txt
+python -m app.main
+```
 
 ## Project Structure
 
 ```
-support-assistant/
-├── setup.sh              # Setup script for dependencies
-├── run.sh                # Runner script
-├── .env.example          # Environment template
-├── .env                  # Your configuration (not in git)
-├── config.py             # Configuration loader
-├── email_client.py       # Gmail IMAP client
-├── classifier.py         # Email classification using Claude
-├── knowledge_search.py   # Notion search using MCP tools
-├── composer.py           # Response drafting using Claude
-├── main.py               # Main entry point
-├── processed_emails.txt  # Tracking file for processed emails
-└── README.md             # This file
+cloud-bot/
+├── app/
+│   ├── __init__.py
+│   ├── config.py           # Environment variable configuration
+│   ├── models.py           # CallData and AnalyzedCall dataclasses
+│   ├── fathom_client.py    # Fathom API client
+│   ├── call_analyzer.py    # Claude-powered call analysis and email drafting
+│   ├── notion_client.py    # Notion REST API client
+│   ├── gmail_client.py     # IMAP draft saving
+│   ├── style_guide.py      # Email style guide loader
+│   └── main.py             # Polling loop and orchestration
+├── .env.example            # Environment variable template
+├── Dockerfile
+├── fly.toml                # Fly.io deployment config
+├── requirements.txt
+└── build.sh                # Deploy helper script
 ```
 
-## Configuration Options
+## Configuration
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `GMAIL_ADDRESS` | Your Gmail address | Required |
+| `ANTHROPIC_API_KEY` | Anthropic API key | Required |
+| `FATHOM_API_KEY` | Fathom API key | Required |
+| `NOTION_API_KEY` | Notion integration token | Required |
+| `NOTION_DATABASE_ID` | Notion database ID (from URL) | Required |
+| `GMAIL_ADDRESS` | Gmail address | Required |
 | `GMAIL_APP_PASSWORD` | Gmail app password | Required |
-| `IMAP_SERVER` | IMAP server address | imap.gmail.com |
-| `IMAP_PORT` | IMAP port | 993 |
-| `POLL_INTERVAL_SECONDS` | Polling interval in seconds | 300 |
-| `SUPPORT_KEYWORDS` | Comma-separated keywords for pre-filtering | help,issue,problem,... |
-| `NOTION_HELP_DATABASE_ID` | Optional Notion database ID | None |
-| `LOG_LEVEL` | Logging level | INFO |
+| `USER_NAME` | Your name (used in AI prompts) | Required |
+| `COMPANY_NAME` | Your company name (used in AI prompts) | Required |
+| `IMAP_SERVER` | IMAP server | `imap.gmail.com` |
+| `IMAP_PORT` | IMAP port | `993` |
+| `POLL_INTERVAL_SECONDS` | Polling interval in seconds | `900` |
+| `LOG_LEVEL` | Logging level | `INFO` |
 
-## Troubleshooting
+## Monitoring
 
-### "Claude CLI not found"
-Install Claude CLI from https://claude.ai/code and ensure it's in your PATH.
+```bash
+# View live logs
+fly logs --app your-app-name
 
-### "Login failed" for Gmail
-- Verify IMAP is enabled in Gmail settings
-- Make sure you're using an App Password, not your regular password
-- Check that 2-Factor Authentication is enabled
+# Check recent logs
+fly logs --app your-app-name --no-tail
+```
 
-### No drafts appearing
-- Check the Gmail Drafts folder (may take a moment to sync)
-- Review logs for any errors during draft saving
-- Verify the `[Gmail]/Drafts` folder name matches your locale
-
-### Notion search not working
-- Ensure Claude CLI has access to Notion MCP tools
-- Verify your Notion workspace is connected to Claude
-
-## Security Notes
-
-- Never commit your `.env` file to version control
-- App Passwords can be revoked at any time from Google Account settings
-- The assistant only reads emails and creates drafts; it never sends emails automatically
-- All drafts require human review before sending
+Look for `Known recordings: N` at startup to confirm the dedup cache loaded, and `duplicate=N processed=0` in cycle summaries when there are no new calls.
