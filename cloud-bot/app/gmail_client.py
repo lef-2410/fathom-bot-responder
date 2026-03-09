@@ -1,6 +1,7 @@
 """Gmail IMAP client — saves follow-up emails as drafts."""
 
 import logging
+import email.policy
 from email.message import EmailMessage
 
 from imapclient import IMAPClient
@@ -31,7 +32,7 @@ def save_draft(to_addresses: list[str] | str, subject: str, body: str) -> bool:
         msg["Subject"] = subject
         msg.set_content(body)
 
-        email_bytes = msg.as_bytes()
+        email_bytes = msg.as_bytes(policy=email.policy.SMTP)
 
         client = IMAPClient(Config.IMAP_SERVER, port=Config.IMAP_PORT, ssl=True)
         client.login(Config.GMAIL_ADDRESS, Config.GMAIL_APP_PASSWORD)
